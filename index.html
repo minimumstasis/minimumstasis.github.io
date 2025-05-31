@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Advanced Fraction to Decimal Converter</title>
+<title>Spedermans Advanced Fraction Calculator</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -86,6 +86,7 @@ originalFraction: { numerator: num, denominator: den },
 simplifiedFraction: simplified,
 decimal: decimal,
 decimalFixed: decimal.toFixed(10).replace(/\.?0+$/, ''),
+centerPoint: (decimal / 2).toFixed(10).replace(/\.?0+$/, ''),
 percentage: (decimal * 100).toFixed(2) + '%',
 millimeters: (decimal * 25.4).toFixed(3),
 centimeters: (decimal * 2.54).toFixed(4),
@@ -131,6 +132,7 @@ originalFraction: { numerator: num, denominator: den },
 simplifiedFraction: simplifyFraction(num, den),
 decimal: fractionInches,
 decimalFixed: fractionInches.toFixed(10).replace(/\.?0+$/, ''),
+centerPoint: (fractionInches / 2).toFixed(10).replace(/\.?0+$/, ''),
 totalInches: totalInches.toFixed(4),
 totalFeet: totalFeet.toFixed(4),
 millimeters: (totalInches * 25.4).toFixed(3),
@@ -170,6 +172,7 @@ const newResult = {
 decimal: decimal,
 fraction: fraction,
 simplifiedFraction: simplified,
+centerPoint: (Math.abs(decimal) / 2).toFixed(10).replace(/\.?0+$/, ''),
 isNegative: decimal < 0,
 millimeters: (Math.abs(decimal) * 25.4).toFixed(3),
 centimeters: (Math.abs(decimal) * 2.54).toFixed(4),
@@ -246,9 +249,9 @@ setDenominator(den.toString());
 };
 
 return (
-<div className="max-w-6xl mx-auto mt-4 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-2xl p-4 md:p-8">
+<div className="max-w-6xl mx-auto mt-4 bg-gradient-to-br from-slate-300 to-slate-500 rounded-xl shadow-2xl p-4 md:p-8">
 <div className="text-center mb-6">
-<h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">Advanced Fraction Calculator</h1>
+<h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">Spedermans Advanced Fraction Calculator</h1>
 <p className="text-gray-600">Convert fractions, decimals, and measurements with detailed explanations</p>
 </div>
 
@@ -512,6 +515,7 @@ className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 py-1 px-1 md:px-2 r
 <h3 className="font-semibold mb-2">Additional</h3>
 <div className="space-y-1 text-sm">
 <div>{result.percentage}</div>
+<div>Center Point: {result.centerPoint}</div>
 <div>Time: {result.timestamp}</div>
 </div>
 </div>
@@ -538,6 +542,7 @@ className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 py-1 px-1 md:px-2 r
 <h3 className="font-semibold mb-2">Properties</h3>
 <div className="space-y-1 text-sm">
 <div>{reverseResult.isNegative ? 'Negative' : 'Positive'}</div>
+<div>Center Point: {reverseResult.centerPoint}</div>
 <div>Time: {reverseResult.timestamp}</div>
 </div>
 </div>
