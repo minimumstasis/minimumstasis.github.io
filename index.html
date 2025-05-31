@@ -11,13 +11,7 @@
 </head>
 <body>
     <div id="root"></div>
-    <script type="text/babel">
-        // Paste the ENTIRE React component code from the artifact here
-        // It should start with: import React, { useState } from 'react';
-        // And end with the closing bracket and export statement
-        
-        // Then ADD this line at the very end:
-        import React, { useState } from 'react';
+    <script type="text/babel">import React, { useState } from 'react';
 
 export default function FractionDecimalConverter() {
   const [numerator, setNumerator] = useState('');
@@ -310,6 +304,11 @@ export default function FractionDecimalConverter() {
     </div>
   );
 }
+        // Paste the ENTIRE React component code from the artifact here
+        // It should start with: import React, { useState } from 'react';
+        // And end with the closing bracket and export statement
+        
+        // Then ADD this line at the very end:
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<FractionDecimalConverter />);
     </script>
