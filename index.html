@@ -1,6 +1,4 @@
-<h1>My Calculator</h1>
-<index.html</h1>
-<!DOCTYPE html>
+<index.html><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -13,10 +11,13 @@
 </head>
 <body>
     <div id="root"></div>
-    <script type="text/babel" src="app.js"></script>
-</body>
-</html>
-<app.js>import React, { useState } from 'react';
+    <script type="text/babel">
+        // Paste the ENTIRE React component code from the artifact here
+        // It should start with: import React, { useState } from 'react';
+        // And end with the closing bracket and export statement
+        
+        // Then ADD this line at the very end:
+        import React, { useState } from 'react';
 
 export default function FractionDecimalConverter() {
   const [numerator, setNumerator] = useState('');
@@ -308,4 +309,9 @@ export default function FractionDecimalConverter() {
       )}
     </div>
   );
-}</app.js>
+}
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<FractionDecimalConverter />);
+    </script>
+</body>
+</html></index.html>
