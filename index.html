@@ -1,239 +1,585 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fraction to Decimal Converter</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Fraction to Decimal Converter</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
-    <div id="root"></div>
-    <script type="text/babel">
-        const { useState } = React;
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
 
-        function FractionDecimalConverter() {
-          const [numerator, setNumerator] = useState('');
-          const [denominator, setDenominator] = useState('');
-          const [result, setResult] = useState(null);
-          const [error, setError] = useState('');
+function FractionDecimalConverter() {
+const [numerator, setNumerator] = useState('');
+const [denominator, setDenominator] = useState('');
+const [feet, setFeet] = useState('');
+const [inches, setInches] = useState('');
+const [decimalInput, setDecimalInput] = useState('');
+const [result, setResult] = useState(null);
+const [reverseResult, setReverseResult] = useState(null);
+const [error, setError] = useState('');
+const [history, setHistory] = useState([]);
+const [activeTab, setActiveTab] = useState('fraction');
 
-          const gcd = (a, b) => {
-            a = Math.abs(a);
-            b = Math.abs(b);
-            while (b !== 0) {
-              let temp = b;
-              b = a % b;
-              a = temp;
-            }
-            return a;
-          };
+const gcd = (a, b) => {
+a = Math.abs(a);
+b = Math.abs(b);
+while (b !== 0) {
+let temp = b;
+b = a % b;
+a = temp;
+}
+return a;
+};
 
-          const simplifyFraction = (num, den) => {
-            const divisor = gcd(num, den);
-            return {
-              numerator: num / divisor,
-              denominator: den / divisor
-            };
-          };
+const simplifyFraction = (num, den) => {
+const divisor = gcd(num, den);
+return {
+numerator: num / divisor,
+denominator: den / divisor
+};
+};
 
-          const convertToDecimal = () => {
-            setError('');
-            setResult(null);
+const decimalToFraction = (decimal) => {
+const tolerance = 1.0E-6;
+let h1 = 1, h2 = 0, k1 = 0, k2 = 1;
+let b = decimal;
 
-            const num = parseInt(numerator);
-            const den = parseInt(denominator);
+do {
+let a = Math.floor(b);
+let aux = h1; h1 = a * h1 + h2; h2 = aux;
+aux = k1; k1 = a * k1 + k2; k2 = aux;
+b = 1 / (b - a);
+} while (Math.abs(decimal - h1 / k1) > decimal * tolerance);
 
-            if (isNaN(num) || isNaN(den)) {
-              setError('Please enter valid numbers for both numerator and denominator.');
-              return;
-            }
+return { numerator: h1, denominator: k1 };
+};
 
-            if (den === 0) {
-              setError('Denominator cannot be zero.');
-              return;
-            }
+const convertToDecimal = () => {
+setError('');
+setResult(null);
 
-            const decimal = num / den;
-            const simplified = simplifyFraction(num, den);
-            const longDivisionSteps = getLongDivisionSteps(Math.abs(num), Math.abs(den));
-            
-            setResult({
-              originalFraction: { numerator: num, denominator: den },
-              simplifiedFraction: simplified,
-              decimal: decimal,
-              decimalFixed: decimal.toFixed(10).replace(/\.?0+$/, ''),
-              percentage: (decimal * 100).toFixed(2) + '%',
-              millimeters: (decimal * 25.4).toFixed(3),
-              centimeters: (decimal * 2.54).toFixed(4),
-              isNegative: (num < 0) !== (den < 0),
-              isRepeating: false,
-              longDivision: longDivisionSteps
-            });
-          };
+const num = parseInt(numerator);
+const den = parseInt(denominator);
 
-          const getLongDivisionSteps = (num, den) => {
-            const steps = [];
-            let remainder = num % den;
-            let quotient = Math.floor(num / den);
-            
-            steps.push({
-              step: 1,
-              dividend: num,
-              divisor: den,
-              quotient: quotient,
-              remainder: remainder
-            });
+if (isNaN(num) || isNaN(den)) {
+setError('Please enter valid numbers for both numerator and denominator.');
+return;
+}
 
-            let stepCount = 2;
-            const seen = new Set();
-            
-            while (remainder !== 0 && stepCount <= 5 && !seen.has(remainder)) {
-              seen.add(remainder);
-              remainder *= 10;
-              quotient = Math.floor(remainder / den);
-              const newRemainder = remainder % den;
-              
-              steps.push({
-                step: stepCount,
-                dividend: remainder,
-                divisor: den,
-                quotient: quotient,
-                remainder: newRemainder
-              });
-              
-              remainder = newRemainder;
-              stepCount++;
-            }
-            
-            return steps;
-          };
+if (den === 0) {
+setError('Denominator cannot be zero.');
+return;
+}
 
-          const clearFields = () => {
-            setNumerator('');
-            setDenominator('');
-            setResult(null);
-            setError('');
-          };
+const decimal = num / den;
+const simplified = simplifyFraction(num, den);
+const longDivisionSteps = getLongDivisionSteps(Math.abs(num), Math.abs(den));
 
-          const insertCommonFraction = (num, den) => {
-            setNumerator(num.toString());
-            setDenominator(den.toString());
-          };
+const newResult = {
+originalFraction: { numerator: num, denominator: den },
+simplifiedFraction: simplified,
+decimal: decimal,
+decimalFixed: decimal.toFixed(10).replace(/\.?0+$/, ''),
+percentage: (decimal * 100).toFixed(2) + '%',
+millimeters: (decimal * 25.4).toFixed(3),
+centimeters: (decimal * 2.54).toFixed(4),
+isNegative: (num < 0) !== (den < 0),
+isRepeating: false,
+longDivision: longDivisionSteps,
+timestamp: new Date().toLocaleTimeString()
+};
 
-          return React.createElement('div', {
-            className: "max-w-4xl mx-auto mt-8 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-2xl p-8"
-          },
-            React.createElement('div', {
-              className: "text-center mb-8"
-            },
-              React.createElement('h1', {
-                className: "text-4xl font-bold text-gray-800 mb-2"
-              }, "Fraction to Decimal Converter"),
-              React.createElement('p', {
-                className: "text-gray-600"
-              }, "Convert fractions to decimals with detailed explanations")
-            ),
-            
-            React.createElement('div', {
-              className: "bg-white rounded-lg shadow-lg p-6 mb-6"
-            },
-              React.createElement('div', {
-                className: "flex items-center justify-center space-x-4 mb-6"
-              },
-                React.createElement('div', {
-                  className: "flex flex-col items-center"
-                },
-                  React.createElement('label', {
-                    className: "text-sm font-medium text-gray-700 mb-2"
-                  }, "Numerator"),
-                  React.createElement('input', {
-                    type: "number",
-                    value: numerator,
-                    onChange: (e) => setNumerator(e.target.value),
-                    className: "w-24 h-12 text-center text-lg border-2 border-gray-300 rounded-md focus:border-blue-500 focus:outline-none",
-                    placeholder: "0"
-                  })
-                ),
-                
-                React.createElement('div', {
-                  className: "text-4xl font-bold text-gray-400 mt-6"
-                }, "—"),
-                
-                React.createElement('div', {
-                  className: "flex flex-col items-center"
-                },
-                  React.createElement('label', {
-                    className: "text-sm font-medium text-gray-700 mb-2"
-                  }, "Denominator"),
-                  React.createElement('input', {
-                    type: "number",
-                    value: denominator,
-                    onChange: (e) => setDenominator(e.target.value),
-                    className: "w-24 h-12 text-center text-lg border-2 border-gray-300 rounded-md focus:border-blue-500 focus:outline-none",
-                    placeholder: "1"
-                  })
-                )
-              ),
+setResult(newResult);
 
-              React.createElement('div', {
-                className: "flex justify-center space-x-4"
-              },
-                React.createElement('button', {
-                  onClick: convertToDecimal,
-                  className: "bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-colors"
-                }, "Convert to Decimal"),
-                React.createElement('button', {
-                  onClick: clearFields,
-                  className: "bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-lg transition-colors"
-                }, "Clear")
-              )
-            ),
+// Add to history
+const historyEntry = {
+id: Date.now(),
+type: 'Fraction to Decimal',
+input: `${num}/${den}`,
+output: newResult.decimalFixed,
+timestamp: newResult.timestamp
+};
+setHistory(prev => [historyEntry, ...prev.slice(0, 9)]);
+};
 
-            React.createElement('div', {
-              className: "bg-white rounded-lg shadow-lg p-6 mb-6"
-            },
-              React.createElement('h3', {
-                className: "text-lg font-semibold text-gray-800 mb-4"
-              }, "Quick Inch Fractions"),
-              React.createElement('div', {
-                className: "grid grid-cols-4 md:grid-cols-8 gap-2"
-              },
-                [[1, 2], [1, 4], [3, 4], [1, 8], [3, 8], [5, 8], [7, 8], [1, 16],
-                 [3, 16], [5, 16], [7, 16], [9, 16], [11, 16], [13, 16], [15, 16], [1, 32]].map(([n, d]) =>
-                  React.createElement('button', {
-                    key: `${n}/${d}`,
-                    onClick: () => insertCommonFraction(n, d),
-                    className: "bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 px-3 rounded border transition-colors text-sm"
-                  }, `${n}/${d}`)
-                )
-              )
-            ),
+const convertFeetInches = () => {
+setError('');
+setResult(null);
 
-            error && React.createElement('div', {
-              className: "bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6"
-            }, error),
+const ft = parseFloat(feet) || 0;
+const inch = parseFloat(inches) || 0;
+const num = parseInt(numerator) || 0;
+const den = parseInt(denominator) || 1;
 
-            result && React.createElement('div', {
-              className: "bg-white rounded-lg shadow-lg p-6"
-            },
-              React.createElement('h2', {
-                className: "text-2xl font-bold text-gray-800 mb-6"
-              }, "Results"),
-              React.createElement('div', {
-                className: "text-center text-3xl font-mono text-blue-600"
-              }, `${result.originalFraction.numerator}/${result.originalFraction.denominator} = ${result.decimalFixed}`),
-              React.createElement('div', {
-                className: "text-center text-xl mt-4"
-              }, `${result.millimeters} mm = ${result.centimeters} cm`)
-            )
-          );
-        }
+if (den === 0) {
+setError('Denominator cannot be zero.');
+return;
+}
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(React.createElement(FractionDecimalConverter));
-    </script>
+const fractionInches = num / den;
+const totalInches = (ft * 12) + inch + fractionInches;
+const totalFeet = totalInches / 12;
+
+const newResult = {
+originalFraction: { numerator: num, denominator: den },
+simplifiedFraction: simplifyFraction(num, den),
+decimal: fractionInches,
+decimalFixed: fractionInches.toFixed(10).replace(/\.?0+$/, ''),
+totalInches: totalInches.toFixed(4),
+totalFeet: totalFeet.toFixed(4),
+millimeters: (totalInches * 25.4).toFixed(3),
+centimeters: (totalInches * 2.54).toFixed(4),
+meters: (totalInches * 0.0254).toFixed(4),
+percentage: (fractionInches * 100).toFixed(2) + '%',
+timestamp: new Date().toLocaleTimeString()
+};
+
+setResult(newResult);
+
+const historyEntry = {
+id: Date.now(),
+type: 'Feet & Inches',
+input: `${ft}' ${inch + fractionInches}"`,
+output: `${totalInches}" (${totalFeet}')`,
+timestamp: newResult.timestamp
+};
+setHistory(prev => [historyEntry, ...prev.slice(0, 9)]);
+};
+
+const convertDecimalToFraction = () => {
+setError('');
+setReverseResult(null);
+
+const decimal = parseFloat(decimalInput);
+
+if (isNaN(decimal)) {
+setError('Please enter a valid decimal number.');
+return;
+}
+
+const fraction = decimalToFraction(Math.abs(decimal));
+const simplified = simplifyFraction(fraction.numerator, fraction.denominator);
+
+const newResult = {
+decimal: decimal,
+fraction: fraction,
+simplifiedFraction: simplified,
+isNegative: decimal < 0,
+millimeters: (Math.abs(decimal) * 25.4).toFixed(3),
+centimeters: (Math.abs(decimal) * 2.54).toFixed(4),
+timestamp: new Date().toLocaleTimeString()
+};
+
+setReverseResult(newResult);
+
+const historyEntry = {
+id: Date.now(),
+type: 'Decimal to Fraction',
+input: decimal.toString(),
+output: `${simplified.numerator}/${simplified.denominator}`,
+timestamp: newResult.timestamp
+};
+setHistory(prev => [historyEntry, ...prev.slice(0, 9)]);
+};
+
+const getLongDivisionSteps = (num, den) => {
+const steps = [];
+let remainder = num % den;
+let quotient = Math.floor(num / den);
+
+steps.push({
+step: 1,
+dividend: num,
+divisor: den,
+quotient: quotient,
+remainder: remainder
+});
+
+let stepCount = 2;
+const seen = new Set();
+
+while (remainder !== 0 && stepCount <= 5 && !seen.has(remainder)) {
+seen.add(remainder);
+remainder *= 10;
+quotient = Math.floor(remainder / den);
+const newRemainder = remainder % den;
+
+steps.push({
+step: stepCount,
+dividend: remainder,
+divisor: den,
+quotient: quotient,
+remainder: newRemainder
+});
+
+remainder = newRemainder;
+stepCount++;
+}
+
+return steps;
+};
+
+const clearFields = () => {
+setNumerator('');
+setDenominator('');
+setFeet('');
+setInches('');
+setDecimalInput('');
+setResult(null);
+setReverseResult(null);
+setError('');
+};
+
+const clearHistory = () => {
+setHistory([]);
+};
+
+const insertCommonFraction = (num, den) => {
+setNumerator(num.toString());
+setDenominator(den.toString());
+};
+
+return (
+<div className="max-w-6xl mx-auto mt-4 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-2xl p-4 md:p-8">
+<div className="text-center mb-6">
+<h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">Advanced Fraction Calculator</h1>
+<p className="text-gray-600">Convert fractions, decimals, and measurements with detailed explanations</p>
+</div>
+
+{/* Tab Navigation */}
+<div className="flex flex-wrap justify-center mb-6 bg-white rounded-lg p-2 shadow">
+{['fraction', 'feet-inches', 'decimal-to-fraction'].map(tab =>
+<button
+key={tab}
+onClick={() => setActiveTab(tab)}
+className={`px-4 py-2 mx-1 my-1 rounded-md transition-colors ${
+activeTab === tab
+? 'bg-blue-600 text-white'
+: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+}`}
+>
+{tab === 'fraction' ? 'Fraction to Decimal' :
+tab === 'feet-inches' ? 'Feet & Inches' :
+'Decimal to Fraction'}
+</button>
+)}
+</div>
+
+{/* Fraction to Decimal Tab */}
+{activeTab === 'fraction' && (
+<div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-6">
+<div className="flex items-center justify-center space-x-4 mb-6">
+<div className="flex flex-col items-center">
+<label className="text-sm font-medium text-gray-700 mb-2">Numerator</label>
+<input
+type="number"
+value={numerator}
+onChange={(e) => setNumerator(e.target.value)}
+className="w-20 md:w-24 h-12 text-center text-lg border-2 border-gray-300 rounded-md focus:border-blue-500 focus:outline-none"
+placeholder="0"
+/>
+</div>
+
+<div className="text-4xl font-bold text-gray-400 mt-6">—</div>
+
+<div className="flex flex-col items-center">
+<label className="text-sm font-medium text-gray-700 mb-2">Denominator</label>
+<input
+type="number"
+value={denominator}
+onChange={(e) => setDenominator(e.target.value)}
+className="w-20 md:w-24 h-12 text-center text-lg border-2 border-gray-300 rounded-md focus:border-blue-500 focus:outline-none"
+placeholder="1"
+/>
+</div>
+</div>
+
+<div className="flex justify-center space-x-4">
+<button
+onClick={convertToDecimal}
+className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 md:px-8 rounded-lg transition-colors"
+>
+Convert to Decimal
+</button>
+<button
+onClick={clearFields}
+className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 md:px-8 rounded-lg transition-colors"
+>
+Clear
+</button>
+</div>
+</div>
+)}
+
+{/* Feet & Inches Tab */}
+{activeTab === 'feet-inches' && (
+<div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-6">
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+<div className="flex flex-col items-center">
+<label className="text-sm font-medium text-gray-700 mb-2">Feet</label>
+<input
+type="number"
+value={feet}
+onChange={(e) => setFeet(e.target.value)}
+className="w-full h-12 text-center text-lg border-2 border-gray-300 rounded-md focus:border-blue-500 focus:outline-none"
+placeholder="0"
+/>
+</div>
+<div className="flex flex-col items-center">
+<label className="text-sm font-medium text-gray-700 mb-2">Inches</label>
+<input
+type="number"
+value={inches}
+onChange={(e) => setInches(e.target.value)}
+className="w-full h-12 text-center text-lg border-2 border-gray-300 rounded-md focus:border-blue-500 focus:outline-none"
+placeholder="0"
+/>
+</div>
+<div className="flex flex-col items-center">
+<label className="text-sm font-medium text-gray-700 mb-2">Numerator</label>
+<input
+type="number"
+value={numerator}
+onChange={(e) => setNumerator(e.target.value)}
+className="w-full h-12 text-center text-lg border-2 border-gray-300 rounded-md focus:border-blue-500 focus:outline-none"
+placeholder="0"
+/>
+</div>
+<div className="flex flex-col items-center">
+<label className="text-sm font-medium text-gray-700 mb-2">Denominator</label>
+<input
+type="number"
+value={denominator}
+onChange={(e) => setDenominator(e.target.value)}
+className="w-full h-12 text-center text-lg border-2 border-gray-300 rounded-md focus:border-blue-500 focus:outline-none"
+placeholder="1"
+/>
+</div>
+</div>
+
+<div className="flex justify-center space-x-4">
+<button
+onClick={convertFeetInches}
+className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 md:px-8 rounded-lg transition-colors"
+>
+Convert Total
+</button>
+<button
+onClick={clearFields}
+className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 md:px-8 rounded-lg transition-colors"
+>
+Clear
+</button>
+</div>
+</div>
+)}
+
+{/* Decimal to Fraction Tab */}
+{activeTab === 'decimal-to-fraction' && (
+<div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-6">
+<div className="flex items-center justify-center space-x-4 mb-6">
+<div className="flex flex-col items-center">
+<label className="text-sm font-medium text-gray-700 mb-2">Decimal Number</label>
+<input
+type="number"
+step="any"
+value={decimalInput}
+onChange={(e) => setDecimalInput(e.target.value)}
+className="w-32 md:w-40 h-12 text-center text-lg border-2 border-gray-300 rounded-md focus:border-blue-500 focus:outline-none"
+placeholder="0.5"
+/>
+</div>
+</div>
+
+<div className="flex justify-center space-x-4">
+<button
+onClick={convertDecimalToFraction}
+className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 md:px-8 rounded-lg transition-colors"
+>
+Convert to Fraction
+</button>
+<button
+onClick={clearFields}
+className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 md:px-8 rounded-lg transition-colors"
+>
+Clear
+</button>
+</div>
+</div>
+)}
+
+{/* Quick Fraction Buttons */}
+<div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-6">
+<h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Inch Fractions</h3>
+<div className="mb-4">
+<h4 className="text-sm font-medium text-gray-600 mb-2">Common Fractions</h4>
+<div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+{[[1, 2], [1, 4], [3, 4], [1, 8], [3, 8], [5, 8], [7, 8], [1, 16]].map(([n, d]) =>
+<button
+key={`${n}/${d}`}
+onClick={() => insertCommonFraction(n, d)}
+className="bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 px-2 md:px-3 rounded border transition-colors text-xs md:text-sm"
+>
+{n}/{d}
+</button>
+)}
+</div>
+</div>
+<div className="mb-4">
+<h4 className="text-sm font-medium text-gray-600 mb-2">Sixteenths</h4>
+<div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+{[[1, 16], [3, 16], [5, 16], [7, 16], [9, 16], [11, 16], [13, 16], [15, 16]].map(([n, d]) =>
+<button
+key={`${n}/${d}`}
+onClick={() => insertCommonFraction(n, d)}
+className="bg-blue-100 hover:bg-blue-200 text-blue-800 py-2 px-2 md:px-3 rounded border transition-colors text-xs md:text-sm"
+>
+{n}/{d}
+</button>
+)}
+</div>
+</div>
+<div className="mb-4">
+<h4 className="text-sm font-medium text-gray-600 mb-2">Thirty-seconds</h4>
+<div className="grid grid-cols-4 md:grid-cols-8 gap-1">
+{[[1, 32], [3, 32], [5, 32], [7, 32], [9, 32], [11, 32], [13, 32], [15, 32],
+[17, 32], [19, 32], [21, 32], [23, 32], [25, 32], [27, 32], [29, 32], [31, 32]].map(([n, d]) =>
+<button
+key={`${n}/${d}`}
+onClick={() => insertCommonFraction(n, d)}
+className="bg-green-100 hover:bg-green-200 text-green-800 py-1 px-1 md:px-2 rounded border transition-colors text-xs"
+>
+{n}/{d}
+</button>
+)}
+</div>
+</div>
+<div>
+<h4 className="text-sm font-medium text-gray-600 mb-2">Sixty-fourths (Common)</h4>
+<div className="grid grid-cols-4 md:grid-cols-8 gap-1">
+{[[1, 64], [3, 64], [5, 64], [7, 64], [9, 64], [11, 64], [13, 64], [15, 64]].map(([n, d]) =>
+<button
+key={`${n}/${d}`}
+onClick={() => insertCommonFraction(n, d)}
+className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 py-1 px-1 md:px-2 rounded border transition-colors text-xs"
+>
+{n}/{d}
+</button>
+)}
+</div>
+</div>
+</div>
+
+{/* Error Display */}
+{error && (
+<div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
+{error}
+</div>
+)}
+
+<div className="grid lg:grid-cols-3 gap-6">
+{/* Results Section */}
+{(result || reverseResult) && (
+<div className="lg:col-span-2 bg-white rounded-lg shadow-lg p-4 md:p-6">
+<h2 className="text-2xl font-bold text-gray-800 mb-6">Results</h2>
+
+{result && (
+<div className="space-y-4">
+<div className="text-center bg-blue-50 p-4 rounded-lg">
+<div className="text-2xl md:text-3xl font-mono text-blue-600">
+{result.totalInches ?
+`${result.totalFeet}' = ${result.totalInches}"` :
+`${result.originalFraction.numerator}/${result.originalFraction.denominator} = ${result.decimalFixed}`
+}
+</div>
+</div>
+<div className="grid md:grid-cols-2 gap-4">
+<div className="bg-orange-50 p-4 rounded-lg">
+<h3 className="font-semibold mb-2">Metric</h3>
+<div className="space-y-1 text-sm">
+<div>{result.millimeters} mm</div>
+<div>{result.centimeters} cm</div>
+{result.meters && <div>{result.meters} m</div>}
+</div>
+</div>
+<div className="bg-purple-50 p-4 rounded-lg">
+<h3 className="font-semibold mb-2">Additional</h3>
+<div className="space-y-1 text-sm">
+<div>{result.percentage}</div>
+<div>Time: {result.timestamp}</div>
+</div>
+</div>
+</div>
+</div>
+)}
+
+{reverseResult && (
+<div className="space-y-4">
+<div className="text-center bg-purple-50 p-4 rounded-lg">
+<div className="text-2xl md:text-3xl font-mono text-purple-600">
+{reverseResult.decimal} = {reverseResult.simplifiedFraction.numerator}/{reverseResult.simplifiedFraction.denominator}
+</div>
+</div>
+<div className="grid md:grid-cols-2 gap-4">
+<div className="bg-orange-50 p-4 rounded-lg">
+<h3 className="font-semibold mb-2">As Inches</h3>
+<div className="space-y-1 text-sm">
+<div>{reverseResult.millimeters} mm</div>
+<div>{reverseResult.centimeters} cm</div>
+</div>
+</div>
+<div className="bg-green-50 p-4 rounded-lg">
+<h3 className="font-semibold mb-2">Properties</h3>
+<div className="space-y-1 text-sm">
+<div>{reverseResult.isNegative ? 'Negative' : 'Positive'}</div>
+<div>Time: {reverseResult.timestamp}</div>
+</div>
+</div>
+</div>
+</div>
+)}
+</div>
+)}
+
+{/* History Section */}
+<div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+<div className="flex justify-between items-center mb-4">
+<h2 className="text-xl font-bold text-gray-800">History</h2>
+{history.length > 0 && (
+<button
+onClick={clearHistory}
+className="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition-colors"
+>
+Clear
+</button>
+)}
+</div>
+{history.length === 0 ? (
+<p className="text-gray-500 text-center py-8">No calculations yet</p>
+) : (
+<div className="space-y-2 max-h-96 overflow-y-auto">
+{history.map(item =>
+<div key={item.id} className="bg-gray-50 p-3 rounded border">
+<div className="font-mono text-sm">{item.input} → {item.output}</div>
+<div className="text-xs text-gray-500 mt-1">{item.type} • {item.timestamp}</div>
+</div>
+)}
+</div>
+)}
+</div>
+</div>
+</div>
+);
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(FractionDecimalConverter));
+</script>
 </body>
 </html>
